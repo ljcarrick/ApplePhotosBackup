@@ -1,0 +1,20 @@
+#!/bin/bash
+# PhotoSync.app launcher
+# Finds launch.sh relative to the .app bundle and runs it in a Terminal window.
+
+APP_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
+LAUNCH="$APP_DIR/launch.sh"
+
+if [ ! -f "$LAUNCH" ]; then
+  osascript -e 'display alert "PhotoSync" message "Cannot find launch.sh — make sure PhotoSync.app is in the same folder as launch.sh."'
+  exit 1
+fi
+
+chmod +x "$LAUNCH"
+
+osascript <<EOF
+tell application "Terminal"
+  activate
+  do script "cd '$APP_DIR' && ./launch.sh"
+end tell
+EOF

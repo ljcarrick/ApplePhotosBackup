@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhotoSync</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg:        #0f0f0f;
+    --surface:   #181818;
+    --border:    #2a2a2a;
+    --border2:   #333;
+    --text:      #e8e8e8;
+    --muted:     #666;
+    --accent:    #4f9cf9;
+    --accent2:   #3b82f6;
+    --green:     #34d399;
+    --amber:     #fbbf24;
+    --red:       #f87171;
+    --mono:      'DM Mono', monospace;
+    --sans:      'DM Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 80px;
+  }
+
+  /* ── header ── */
+  header {
+    width: 100%;
+    max-width: 680px;
+    margin-bottom: 48px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  header h1 {
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+  }
+  header span {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── card ── */
+  .card {
+    width: 100%;
+    max-width: 680px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  /* ── field ── */
+  .field { margin-bottom: 20px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  input[type="text"], input[type="date"], select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 7px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type="text"]:focus, input[type="date"]:focus, select:focus {
+    border-color: var(--accent);
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.5);
+    cursor: pointer;
+  }
+
+  .date-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* ── toggle ── */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  .toggle-row:first-of-type { border-top: none; padding-top: 0; }
+
+  .toggle-info { flex: 1; }
+  .toggle-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .toggle-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .switch {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+    margin-left: 20px;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute;
+    inset: 0;
+    background: var(--border2);
+    border-radius: 22px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .slider::before {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    left: 3px; top: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .switch input:checked + .slider { background: var(--accent); }
+  .switch input:checked + .slider::before { transform: translateX(18px); }
+
+  /* ── preflight badge ── */
+  .preflight {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 20px;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    margin-top: 16px;
+  }
+  .preflight-stat { text-align: center; }
+  .preflight-num {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .preflight-lbl {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+  }
+  .preflight-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--border2);
+  }
+
+  /* ── buttons ── */
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  button {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 11px 22px;
+    transition: opacity 0.15s, background 0.15s;
+  }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    flex: 1;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--accent2); }
+
+  .btn-secondary {
+    background: var(--border2);
+    color: var(--text);
+  }
+  .btn-secondary:hover:not(:disabled) { background: #3a3a3a; }
+
+  .btn-danger {
+    background: #3d1f1f;
+    color: var(--red);
+  }
+  .btn-danger:hover:not(:disabled) { background: #4d2525; }
+
+  /* ── status bar ── */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  .status-bar.info    { background: #1a2535; border: 1px solid #2a3d55; color: var(--accent); }
+  .status-bar.success { background: #0f2820; border: 1px solid #1e4030; color: var(--green); }
+  .status-bar.warning { background: #2a1f0a; border: 1px solid #3d2f0f; color: var(--amber); }
+  .status-bar.error   { background: #2a0f0f; border: 1px solid #3d1f1f; color: var(--red); }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+  /* ── progress ── */
+  .progress-wrap {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    overflow: hidden;
+    height: 6px;
+    margin: 16px 0;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    transition: width 0.3s ease;
+    border-radius: 8px;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .stats-row span { color: var(--text); }
+
+  /* ── log ── */
+  .log {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    height: 220px;
+    overflow-y: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .log .log-error { color: var(--red); }
+  .log .log-ok    { color: var(--green); }
+  .log .log-skip  { color: var(--muted); }
+
+  /* ── install notice ── */
+  .install-notice {
+    padding: 20px;
+    background: var(--bg);
+    border: 1px solid #3d2f0f;
+    border-radius: 8px;
+    margin-top: 12px;
+  }
+  .install-notice p { font-size: 13px; color: var(--amber); margin-bottom: 12px; }
+  .install-notice code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: #1a1200;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* ── input row ── */
+  .input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .input-row input {
+    flex: 1;
+    min-width: 0;
+  }
+  .btn-browse {
+    background: var(--border2);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 16px;
+    border-radius: 7px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .btn-browse:hover { background: #3a3a3a; }
+
+    /* ── spinner ── */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+    /* ── permission error ── */
+  .perm-error {
+    background: #1f1510;
+    border: 1px solid #6b3a1f;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+  .perm-error-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--amber);
+    margin-bottom: 6px;
+  }
+  .perm-error-body {
+    font-size: 13px;
+    color: #c49a6c;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .perm-error-steps {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 16px;
+    line-height: 2;
+  }
+  .perm-error-steps span {
+    color: var(--text);
+  }
+
+    /* ── util ── */
+  .hidden { display: none !important; }
+  .mt8 { margin-top: 8px; }
+  .mt16 { margin-top: 16px; }
+
+  select option { background: #1a1a1a; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PhotoSync</h1>
+  <span>Apple Photos → Backup</span>
+</header>
+
+<!-- source -->
+<div class="card" id="card-source">
+  <div class="card-title">Source</div>
+  <div class="field">
+    <label>Photos Library</label>
+    <div class="input-row">
+      <input type="text" id="library-path" placeholder="Detecting…" readonly>
+      <button class="btn-browse" onclick="browseLibrary()">Browse…</button>
+    </div>
+  </div>
+</div>
+
+<!-- date filter -->
+<div class="card" id="card-dates">
+  <div class="card-title">Date Range</div>
+  <div class="toggle-row">
+    <div class="toggle-info">
+      <div class="toggle-label">Filter by date</div>
+      <div class="toggle-desc">Export all photos, or limit to a range</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="use-dates" onchange="toggleDates()">
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div id="date-fields" class="hidden mt16">
+    <div class="date-row">
+      <div class="field">
+        <label>From</label>
+        <input type="date" id="from-date">
+      </div>
+      <div class="field">
+        <label>To</label>
+        <input type="date" id="to-date">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- options -->
+<div class="card" id="card-options">
+  <div class="card-title">Options</div>
+  <div class="toggle-row">
+    <div class="toggle-info">
+      <div class="toggle-label">Convert HEIC to JPEG</div>
+      <div class="toggle-desc">Better compatibility with TVs, Windows, and older devices</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="convert-heic">
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div class="toggle-row">
+    <div class="toggle-info">
+      <div class="toggle-label">Include metadata sidecars</div>
+      <div class="toggle-desc">Write XMP files alongside photos — captions, keywords, albums. Synology Photos reads these automatically.</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="sidecar-xmp">
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div class="toggle-row">
+    <div class="toggle-info">
+      <div class="toggle-label">Download missing from iCloud</div>
+      <div class="toggle-desc">Fetch photos stored only in iCloud before exporting — slower but complete</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="download-missing">
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div class="toggle-row">
+    <div class="toggle-info">
+      <div class="toggle-label">Dry run</div>
+      <div class="toggle-desc">Preview what would be copied without moving any files</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="dry-run">
+      <span class="slider"></span>
+    </label>
+  </div>
+</div>
+
+<!-- destination -->
+<div class="card" id="card-dest">
+  <div class="card-title">Destination</div>
+  <div class="field">
+    <label>Export Folder</label>
+    <div class="input-row">
+      <input type="text" id="dest-path" placeholder="Choose a folder…" readonly>
+      <button class="btn-browse" onclick="browseDestination()">Browse…</button>
+    </div>
+  </div>
+</div>
+
+<!-- preflight + export -->
+<div class="card" id="card-action">
+  <div class="card-title">Export</div>
+
+  <div id="preflight-status"></div>
+  <div id="preflight-result" class="hidden">
+    <div class="preflight">
+      <div class="preflight-stat">
+        <div class="preflight-num" id="pf-count">—</div>
+        <div class="preflight-lbl">Photos</div>
+      </div>
+      <div class="preflight-divider"></div>
+      <div class="preflight-stat">
+        <div class="preflight-num" id="pf-size">—</div>
+        <div class="preflight-lbl">Total Size</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-secondary" id="btn-preflight" onclick="runPreflight()">Check Library</button>
+    <button class="btn-primary" id="btn-export" onclick="startExport()" disabled>Start Export</button>
+  </div>
+</div>
+
+<!-- progress -->
+<div class="card hidden" id="card-progress">
+  <div class="card-title">Progress</div>
+
+  <div id="status-message"></div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+  </div>
+
+  <div class="stats-row">
+    <div>Exported <span id="stat-exported">0</span></div>
+    <div>Skipped <span id="stat-skipped">0</span></div>
+    <div>Missing <span id="stat-missing">0</span></div>
+    <div>Errors <span id="stat-errors">0</span></div>
+  </div>
+
+  <div class="log" id="export-log"></div>
+
+  <div class="btn-row mt16">
+    <button class="btn-danger hidden" id="btn-stop" onclick="stopExport()">Stop</button>
+    <button class="btn-secondary hidden" id="btn-reset" onclick="resetUI()">New Export</button>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+let totalPhotos = 0;
+let exportController = null;
+
+// ── init ──────────────────────────────────────────────────────────────────
+
+async function checkStatus() {
+  try {
+    const r = await fetch(`${API}/api/status`);
+    const d = await r.json();
+
+    if (d.photos_library) {
+      document.getElementById('library-path').value = d.photos_library;
+    }
+
+
+
+  } catch (e) {
+    showStatus('Cannot connect to PhotoSync server. Is it running?', 'error');
+  }
+}
+
+async function browseLibrary() {
+  const r = await fetch(`${API}/api/browse?type=library`);
+  const d = await r.json();
+  if (d.path) document.getElementById('library-path').value = d.path;
+}
+
+async function browseDestination() {
+  const r = await fetch(`${API}/api/browse?type=folder`);
+  const d = await r.json();
+  if (d.path) document.getElementById('dest-path').value = d.path;
+}
+
+function toggleDates() {
+  const on = document.getElementById('use-dates').checked;
+  document.getElementById('date-fields').classList.toggle('hidden', !on);
+}
+
+// ── preflight ─────────────────────────────────────────────────────────────
+
+async function runPreflight() {
+  const btn = document.getElementById('btn-preflight');
+  btn.disabled = true;
+  btn.textContent = 'Checking…';
+  showStatus('<span class="spinner"></span>Scanning library — may take a minute on large collections…', 'info');
+
+  try {
+    const payload = buildPayload();
+    const r = await fetch(`${API}/api/preflight`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const d = await r.json();
+
+    if (!r.ok) throw new Error(d.detail || 'Preflight failed');
+
+    totalPhotos = d.count;
+    document.getElementById('pf-count').textContent = d.count.toLocaleString();
+    document.getElementById('pf-size').textContent = d.size_gb > 0
+      ? `${d.size_gb} GB`
+      : `${Math.round(d.size_bytes / 1024 / 1024)} MB`;
+
+    document.getElementById('preflight-result').classList.remove('hidden');
+    document.getElementById('btn-export').disabled = false;
+    showStatus('✓ Library scanned — ready to export', 'success');
+
+  } catch (e) {
+    if (e.message === 'PERMISSION_DENIED' || (e.message && e.message.includes('403'))) {
+      showPermissionError();
+    } else {
+      showStatus(e.message, 'error');
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Check Library';
+  }
+}
+
+function showPermissionError() {
+  const el = document.getElementById('preflight-status');
+  el.innerHTML = `
+    <div class="perm-error">
+      <div class="perm-error-title">📷 Photos access required</div>
+      <div class="perm-error-body">
+        PhotoSync needs permission to read your Photos library.
+        Grant access in System Settings, then relaunch PhotoSync.
+      </div>
+      <div class="perm-error-steps">
+        <span>System Settings</span> → Privacy &amp; Security → <span>Photos</span> → enable <span>Terminal</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="openPrivacySettings()">Open Privacy Settings…</button>
+      </div>
+    </div>`;
+}
+
+function openPrivacySettings() {
+  fetch(API + '/api/open-privacy-settings').catch(() => {});
+}
+
+// ── export ────────────────────────────────────────────────────────────────
+
+function buildPayload() {
+  const useDates = document.getElementById('use-dates').checked;
+  return {
+    library_path: document.getElementById('library-path').value,
+    destination: document.getElementById('dest-path').value,
+    from_date: useDates ? document.getElementById('from-date').value || null : null,
+    to_date:   useDates ? document.getElementById('to-date').value   || null : null,
+    convert_heic: document.getElementById('convert-heic').checked,
+    download_missing: document.getElementById('download-missing').checked,
+    sidecar_xmp: document.getElementById('sidecar-xmp').checked,
+    dry_run: document.getElementById('dry-run').checked,
+  };
+}
+
+async function startExport() {
+  const payload = buildPayload();
+  if (!payload.destination) {
+    showStatus('Please set a destination path.', 'error');
+    return;
+  }
+
+  document.getElementById('card-progress').classList.remove('hidden');
+  document.getElementById('btn-export').disabled = true;
+  document.getElementById('btn-stop').classList.remove('hidden');
+  document.getElementById('btn-reset').classList.add('hidden');
+  document.getElementById('export-log').innerHTML = '';
+
+  const isDryRun = payload.dry_run;
+  showStatus(isDryRun ? 'Dry run in progress…' : 'Exporting…', 'info');
+
+  exportController = new AbortController();
+
+  try {
+    const r = await fetch(`${API}/api/export`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: exportController.signal,
+    });
+
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const msg = JSON.parse(line.slice(6));
+          handleMessage(msg);
+        } catch {}
+      }
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      showStatus('Connection error: ' + e.message, 'error');
+    }
+  }
+}
+
+function handleMessage(msg) {
+  if (msg.type === 'progress') {
+    document.getElementById('stat-exported').textContent = msg.exported;
+    document.getElementById('stat-skipped').textContent  = msg.skipped;
+    document.getElementById('stat-missing').textContent  = msg.missing || 0;
+    document.getElementById('stat-errors').textContent   = msg.errors;
+
+    if (totalPhotos > 0) {
+      const pct = Math.min(100, Math.round(((msg.exported + msg.skipped) / totalPhotos) * 100));
+      document.getElementById('progress-bar').style.width = pct + '%';
+    }
+
+    appendLog(msg.line, msg.line.toLowerCase().includes('error') ? 'log-error' :
+                        msg.line.toLowerCase().includes('skip')  ? 'log-skip'  : '');
+  }
+
+  if (msg.type === 'done') {
+    const ok = msg.returncode === 0;
+    showStatus(
+      ok ? `Done — ${msg.exported} exported, ${msg.skipped} skipped${msg.missing ? `, ${msg.missing} not downloaded from iCloud` : ''}${msg.errors ? `, ${msg.errors} errors` : ''}`
+         : `Finished with errors (code ${msg.returncode})`,
+      ok && msg.errors === 0 ? 'success' : 'warning'
+    );
+    document.getElementById('progress-bar').style.width = '100%';
+    document.getElementById('btn-stop').classList.add('hidden');
+    document.getElementById('btn-reset').classList.remove('hidden');
+  }
+}
+
+function stopExport() {
+  if (exportController) exportController.abort();
+  showStatus('Export stopped.', 'warning');
+  document.getElementById('btn-stop').classList.add('hidden');
+  document.getElementById('btn-reset').classList.remove('hidden');
+}
+
+function resetUI() {
+  document.getElementById('card-progress').classList.add('hidden');
+  document.getElementById('btn-export').disabled = false;
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('stat-exported').textContent = '0';
+  document.getElementById('stat-skipped').textContent  = '0';
+  document.getElementById('stat-errors').textContent   = '0';
+  document.getElementById('export-log').innerHTML = '';
+  document.getElementById('status-message').innerHTML = '';
+  exportController = null;
+}
+
+// ── helpers ───────────────────────────────────────────────────────────────
+
+function showStatus(msg, type) {
+  const progressHidden = document.getElementById('card-progress').classList.contains('hidden');
+  const elId = progressHidden ? 'preflight-status' : 'status-message';
+  const el = document.getElementById(elId);
+  if (el) el.innerHTML = `<div class="status-bar ${type}"><div class="status-dot"></div>${msg}</div>`;
+}
+
+function appendLog(text, cls) {
+  appendToEl(document.getElementById('export-log'), text, cls);
+}
+
+function appendToEl(el, text, cls) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  if (cls) div.className = cls;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── boot ─────────────────────────────────────────────────────────────────
+checkStatus();
+</script>
+</body>
+</html>

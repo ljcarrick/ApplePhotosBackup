@@ -1,0 +1,5 @@
+.venv/
+__pycache__/
+*.pyc
+.osxphotos_export.db
+.DS_Store
